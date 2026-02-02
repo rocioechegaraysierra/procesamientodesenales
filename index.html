@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sintetizador UNTREF - Procesamiento de Señales</title>
+    <title>Sintetizador - UNTREF</title>
     
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
@@ -13,86 +13,147 @@
     </py-config>
 
     <style>
-        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
-        .loading { color: orange; font-weight: bold; }
-        #plot { margin-top: 20px; min-height: 300px; background: #f9f9f9; border: 1px solid #ddd; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        button:disabled { background-color: #ccc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; background-color: #f4f7f6; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .math-box { background: #eef2f3; padding: 15px; border-left: 5px solid #00ff04; margin: 20px 0; font-family: monospace; }
+        .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        #plot { width: 100%; }
+        
+        /* Estilos de la Barra de Carga */
+        .loading-container { text-align: center; padding: 20px; }
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 10px;
+            width: 0%;
+            background-color: #007bff;
+            transition: width 0.4s ease;
+            animation: progress-animation 15s infinite; /* Simulación */
+        }
+        @keyframes progress-animation {
+            0% { width: 0%; }
+            20% { width: 30%; }
+            50% { width: 70%; }
+            80% { width: 90%; }
+            100% { width: 95%; }
+        }
+
+        h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
     </style>
 </head>
 <body>
-    <h1>Sintetizador de Señales</h1>
-    <p>Procesamiento de Señales - UNTREF</p>
-    
-    <div id="status" class="loading">Cargando Python y Librerías... por favor espere</div>
-    <hr>
 
-    <div id="controls" style="display:none;">
-        <label>Frecuencia :</label>
-        <input type="number" id="freq" value="440" step="10"> Hz
-        <br><br>
-        <label>Tipo de onda:</label>
-        <select id="wave-type">
-            <option value="sin">Senoidal</option>
-            <option value="square">Cuadrada</option>
-            <option value="triangle">Triangular</option>
-            <option value="sawtooth">Diente de Sierra</option>
-        </select>
-        <br><br>
-        <button id="btn-generate" py-click="generate_signal">Generar y Graficar</button>
+<div class="container">
+    <h1>Sintetizador de Audio - Procesamiento de Señales - UNTREF</h1>
+    
+    <div id="loader" class="loading-container">
+        <span id="status-text" style="color: #d9534f; font-weight: bold;">Cargando motor de Python y librerías...</span>
+        <div class="progress-bar">
+            <div id="fill" class="progress-fill"></div>
+        </div>
     </div>
 
+    <div id="controls" style="display:none;">
+        <div class="controls-grid">
+            <div>
+                <label><b>Frecuencia de la Señal (f):</b></label><br>
+                <input type="number" id="freq" value="440"> Hz
+                <br><br>
+                <label><b>Frecuencia de Muestreo (fs):</b></label><br>
+                <select id="fs">
+                    <option value="8000">8000 Hz (Baja)</option>
+                    <option value="44100" selected>44100 Hz (CD)</option>
+                    <option value="48000">48000 Hz (Pro)</option>
+                </select>
+            </div>
+            <div>
+                <label><b>Tipo de Onda:</b></label><br>
+                <select id="wave-type">
+                    <option value="sin">Senoidal</option>
+                    <option value="square">Cuadrada</option>
+                    <option value="sawtooth">Diente de Sierra</option>
+                </select>
+                <br><br>
+                <label><b>Filtro FIR (Suavizado):</b></label><br>
+                <input type="range" id="filter-level" min="1" max="20" value="1">
+                <span id="filter-val">Desactivado</span>
+            </div>
+        </div>
+        
+        <button id="btn" py-click="process" style="width:100%; padding:15px; background:#28a745; color:white; border:none; border-radius:5px; font-size:1.1em; cursor:pointer;">
+            Generar Señal y Ver Cálculos
+        </button>
+    </div>
+
+    <div id="math-output" class="math-box" style="display:none;"></div>
     <div id="plot"></div>
+</div>
 
-    <script type="py">
-        import numpy as np
-        import matplotlib.pyplot as plt
-        from pyscript import display
-        from js import document
+<script type="py">
+import numpy as np
+import matplotlib.pyplot as plt
+from pyscript import display
+from js import document
 
-        # Quitar el mensaje de carga cuando Python esté listo
-        document.getElementById("status").style.display = "none"
-        document.getElementById("controls").style.display = "block"
 
-        def generate_signal(event):
-            # 1. Configuración de Muestreo (Unidad 3)
-            fs = 44100  # Frecuencia de muestreo
-            duration = 0.005  # Ventana de tiempo corta para ver la forma de onda
-            t = np.linspace(0, duration, int(fs * duration), endpoint=False)
-            
-            # 2. Captura de datos
-            try:
-                f = float(document.getElementById("freq").value)
-            except:
-                f = 440.0
-            
-            wave_type = document.getElementById("wave-type").value
-            
-            # 3. Generación matemática de la señal (Unidad 2) 
-            if wave_type == "sin":
-                y = np.sin(2 * np.pi * f * t)
-            elif wave_type == "square":
-                y = np.sign(np.sin(2 * np.pi * f * t))
-            elif wave_type == "triangle":
-                y = 2 * np.abs(2 * (t * f - np.floor(t * f + 0.5))) - 1
-            elif wave_type == "sawtooth":
-                y = 2 * (t * f - np.floor(t * f + 0.5))
-            else:
-                y = np.zeros(len(t))
+document.getElementById("loader").style.display = "none"
+document.getElementById("controls").style.display = "block"
 
-            # 4. Visualización (Unidad 8) 
-            plt.close('all')
-            fig, ax = plt.subplots(figsize=(7, 4))
-            ax.plot(t, y, 'b-', linewidth=2)
-            ax.set_title(f"Onda {wave_type.capitalize()} a {f} Hz")
-            ax.set_xlabel("Tiempo [s]")
-            ax.set_ylabel("Amplitud")
-            ax.grid(True)
-            
-            # Limpiar div y mostrar
-            plot_div = document.getElementById("plot")
-            plot_div.innerHTML = ""
-            display(fig, target="plot")
-    </script>
+def process(event):
+    f = float(document.getElementById("freq").value)
+    fs = int(document.getElementById("fs").value)
+    w_type = document.getElementById("wave-type").value
+    filter_order = int(document.getElementById("filter-level").value)
+    
+    document.getElementById("filter-val").innerText = f"Orden: {filter_order}" if filter_order > 1 else "Desactivado"
+
+    # Cálculos (Unidad 3)
+    T = 1/f
+    Ts = 1/fs
+    samples_per_cycle = fs / f
+    
+    math_text = f"""
+    <b>Cálculos realizados:</b><br>
+    - Periodo de la señal (T): 1/{f} = {T:.5f} s<br>
+    - Tiempo entre muestras (Ts): 1/{fs} = {Ts:.6f} s<br>
+    - Muestras por ciclo: {samples_per_cycle:.2f}<br>
+    - Ecuación: x[n] = A * f(2 * π * f * n * Ts)
+    """
+    out_box = document.getElementById("math-output")
+    out_box.style.display = "block"
+    out_box.innerHTML = math_text
+
+    duration = 0.01 
+    t = np.arange(0, duration, Ts)
+    
+    if w_type == "sin":
+        y = np.sin(2 * np.pi * f * t)
+    elif w_type == "square":
+        y = np.sign(np.sin(2 * np.pi * f * t))
+    elif w_type == "sawtooth":
+        y = 2 * (t * f - np.floor(t * f + 0.5))
+
+    if filter_order > 1:
+        kernel = np.ones(filter_order) / filter_order
+        y = np.convolve(y, kernel, mode='same')
+
+    plt.close('all')
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.plot(t, y, 'b-o', markersize=3, label="Señal Discreta x[n]")
+    ax.set_title(f"Sintetizador: {w_type.upper()} a {f}Hz (fs={fs}Hz)")
+    ax.set_xlabel("Tiempo [s]")
+    ax.set_ylabel("Amplitud")
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+    
+    plot_div = document.getElementById("plot")
+    plot_div.innerHTML = ""
+    display(fig, target="plot")
+</script>
 </body>
 </html>
