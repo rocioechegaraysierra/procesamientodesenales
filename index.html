@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sintetizador Avanzado - UNTREF</title>
+    <title>Sintetizador - UNTREF</title>
     
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
@@ -14,19 +14,20 @@
 
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f0f2f5; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
         .math-box { background: #f8fff9; padding: 12px; border-left: 5px solid #28a745; margin-bottom: 15px; font-family: monospace; font-size: 0.85em; }
         #loader { text-align: center; padding: 40px; }
         .bar { width: 100%; background: #eee; border-radius: 10px; height: 10px; overflow: hidden; margin-top: 10px; }
         .fill { width: 0%; height: 100%; background: #d9534f; animation: load 8s forwards; }
         @keyframes load { from { width: 0%; } to { width: 98%; } }
-        h1 { color: #2c3e50; text-align: center; font-size: 1.5em; border-bottom: 2px solid #d9534f; padding-bottom: 5px; }
-        button { width: 100%; padding: 12px; background: #d9534f; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #d9534f; padding-bottom: 5px; }
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1em; }
+        button:hover { background: #218838; }
         label { font-size: 0.9em; font-weight: bold; display: block; margin-top: 10px; }
-        select, input { margin-bottom: 5px; padding: 5px; width: 100%; box-sizing: border-box; }
+        select, input { margin-bottom: 5px; padding: 8px; width: 100%; box-sizing: border-box; }
         .hidden { display: none; }
-        .filter-params { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
+        .filter-params { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; background: #fffde7; padding: 10px; border-radius: 5px; }
     </style>
 
     <script>
@@ -44,7 +45,6 @@
                 divF2.classList.add("hidden");
                 labelF1.innerText = "Frecuencia de Corte (Fc):";
             } else {
-                // Bandpass o Bandstop
                 divF1.classList.remove("hidden");
                 divF2.classList.remove("hidden");
                 labelF1.innerText = "Frecuencia Inicial (f1):";
@@ -55,27 +55,27 @@
 <body>
 
 <div class="container">
-    <h1>Procesamiento de Señales: Filtros Digitales</h1>
+    <h1>Señales</h1>
     
     <div id="loader">
-        <p>Cargando librerías de señales...</p>
+        <p>Iniciando motor de procesamiento...</p>
         <div class="bar"><div class="fill"></div></div>
     </div>
 
     <div id="main-ui" style="display:none;">
         <div class="controls-grid">
             <div>
-                <h3>Generación</h3>
-                <label>Frecuencia de la Señal (Hz):</label>
-                <input type="number" id="freq" value="440">
+                <h3 style="margin-top:0">1. Generador de Señal</h3>
+                <label>Frecuencia fundamental (Hz):</label>
+                <input type="number" id="freq" value="440" min="20" max="20000">
                 
                 <label>Frecuencia de Muestreo (fs):</label>
                 <select id="fs">
-                    <option value="8000">8000 Hz (Telefonía)</option>
-                    <option value="44100" selected>44100 Hz (Audio CD)</option>
+                    <option value="8000">8000 Hz</option>
+                    <option value="44100" selected>44100 Hz</option>
                 </select>
 
-                <label>Tipo de Onda:</label>
+                <label>Forma de Onda:</label>
                 <select id="wave-type">
                     <option value="sin">Senoidal</option>
                     <option value="square">Cuadrada</option>
@@ -84,31 +84,31 @@
             </div>
 
             <div>
-                <h3>Filtrado LTI</h3>
-                <label>Tipo de Filtro:</label>
+                <h3 style="margin-top:0">2. Configuración del Filtro</h3>
+                <label>Tipo de Respuesta:</label>
                 <select id="filter-type" onchange="updateFilterUI()">
-                    <option value="none">Bypass (Sin Filtro)</option>
-                    <option value="lowpass">Pasa-Bajos (Low-Pass)</option>
-                    <option value="highpass">Pasa-Altos (High-Pass)</option>
-                    <option value="bandpass">Pasa-Banda (Band-Pass)</option>
-                    <option value="bandstop">Elimina-Banda (Notch/Band-Stop)</option>
+                    <option value="none">Bypass</option>
+                    <option value="lowpass">Pasa-Bajos</option>
+                    <option value="highpass">Pasa-Altos</option>
+                    <option value="bandpass">Pasa-Banda</option>
+                    <option value="bandstop">Elimina-Banda</option>
                 </select>
 
                 <div id="div-f1" class="hidden filter-params">
-                    <label id="label-f1">Frecuencia de Corte:</label>
-                    <input type="range" id="f1" min="20" max="10000" value="1000" 
+                    <label id="label-f1">Frecuencia:</label>
+                    <input type="range" id="f1" min="20" max="15000" value="1000" 
                            oninput="document.getElementById('val-f1').innerText = this.value + ' Hz'">
                     <center><span id="val-f1">1000 Hz</span></center>
                 </div>
 
                 <div id="div-f2" class="hidden filter-params">
                     <label>Frecuencia Final (f2):</label>
-                    <input type="range" id="f2" min="20" max="10000" value="4000" 
+                    <input type="range" id="f2" min="20" max="15000" value="4000" 
                            oninput="document.getElementById('val-f2').innerText = this.value + ' Hz'">
                     <center><span id="val-f2">4000 Hz</span></center>
                 </div>
 
-                <button id="btn" py-click="run_process" style="margin-top:15px;">Procesar Señal</button>
+                <button id="btn" py-click="run_process">PROCESAR Y ANALIZAR</button>
             </div>
         </div>
 
@@ -124,80 +124,101 @@ from scipy import signal
 from pyscript import display
 from js import document
 
-# Quitar loader al iniciar
 document.getElementById("loader").style.display = "none"
 document.getElementById("main-ui").style.display = "block"
 
 def run_process(event):
-    # Leer valores de la UI
-    f_signal = float(document.getElementById("freq").value)
+    # 1. Obtención de parámetros
+    f_sig = float(document.getElementById("freq").value)
     fs = int(document.getElementById("fs").value)
     w_type = document.getElementById("wave-type").value
     f_type = document.getElementById("filter-type").value
     f1 = float(document.getElementById("f1").value)
     f2 = float(document.getElementById("f2").value)
 
-    # Configuración de tiempo 
-    duration = 4 / f_signal if f_signal > 0 else 0.01
+    # Tiempo: mostramos una ventana pequeña para ver la forma de onda
+    duration = 0.01 
     t = np.arange(0, duration, 1/fs)
-    
-    # 1. Generación de la señal original
-    if w_type == "sin":
-        y_raw = np.sin(2 * np.pi * f_signal * t)
-    elif w_type == "square":
-        y_raw = signal.square(2 * np.pi * f_signal * t)
-    elif w_type == "sawtooth":
-        y_raw = signal.sawtooth(2 * np.pi * f_signal * t)
-
-    # 2. Aplicación de Filtros (Puntos 1 y 2 de la devolución)
-    y_filt = y_raw.copy()
     nyq = 0.5 * fs
     
-    try:
-        if f_type != "none":
-            # Normalización de frecuencias (f/Nyquist)
-            low = np.clip(f1 / nyq, 0.001, 0.999)
-            high = np.clip(f2 / nyq, 0.001, 0.999)
+    # 2. Generar señal
+    if w_type == "sin":
+        y_raw = np.sin(2 * np.pi * f_sig * t)
+    elif w_type == "square":
+        y_raw = signal.square(2 * np.pi * f_sig * t)
+    else:
+        y_raw = signal.sawtooth(2 * np.pi * f_sig * t)
 
-            if f_type == "lowpass":
-                b, a = signal.butter(4, low, btype='low')
-            elif f_type == "highpass":
-                b, a = signal.butter(4, low, btype='high')
-            elif f_type == "bandpass":
-                # Ordenar f1 y f2 por si el usuario movió los sliders al revés
-                edges = sorted([low, high])
-                b, a = signal.butter(4, edges, btype='band')
-            elif f_type == "bandstop":
-                edges = sorted([low, high])
-                b, a = signal.butter(4, edges, btype='stop')
-            
-            y_filt = signal.lfilter(b, a, y_raw)
-    except Exception as e:
-        print(f"Error en filtro: {e}")
+    # 3. Diseño y aplicación del filtro
+    y_filt = y_raw.copy()
+    b, a = [1.0], [1.0] # Filtro identidad por defecto
+    has_filter = f_type != "none"
 
-    # Mostrar info técnica
-    info = f"<b>Estado:</b> Procesando señal {w_type} a {f_signal}Hz | <b>Filtro:</b> {f_type.upper()}"
-    document.getElementById("math-display").style.display = "block"
-    document.getElementById("math-display").innerHTML = info
+    if has_filter:
+        low = np.clip(f1 / nyq, 0.001, 0.99)
+        high = np.clip(f2 / nyq, 0.001, 0.99)
+        
+        if f_type == "lowpass":
+            b, a = signal.butter(4, low, btype='low')
+        elif f_type == "highpass":
+            b, a = signal.butter(4, low, btype='high')
+        elif f_type == "bandpass":
+            edges = sorted([low, high])
+            b, a = signal.butter(4, edges, btype='band')
+        elif f_type == "bandstop":
+            edges = sorted([low, high])
+            b, a = signal.butter(4, edges, btype='stop')
+        
+        y_filt = signal.lfilter(b, a, y_raw)
 
-    # 3. Gráficos
+    # 4. Cálculo de Respuesta en Frecuencia (Punto 3 de la devolución)
+    w, h = signal.freqz(b, a, worN=2000)
+    freq_axis = (fs * w) / (2 * np.pi)
+
+    # 5. Gráficos
     plt.close('all')
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6))
-    fig.tight_layout(pad=4.0)
+    fig = plt.figure(figsize=(11, 8))
+    gs = fig.add_gridspec(2, 2)
     
-    ax1.plot(t * 1000, y_raw, color='#3498db', label="Original")
-    ax1.set_title("Señal de Entrada (Tiempo)")
-    ax1.set_ylabel("Amplitud")
-    ax1.set_xlabel("Tiempo (ms)")
-    ax1.grid(True, alpha=0.3)
+    # Gráfico de tiempo (Señal original vs filtrada)
+    ax_t = fig.add_subplot(gs[0, :])
+    ax_t.plot(t*1000, y_raw, label="Original", alpha=0.5, color='gray', linestyle='--')
+    ax_t.plot(t*1000, y_filt, label="Filtrada", color='red', linewidth=2)
+    ax_t.set_title("Dominio del Tiempo: Comparación de Señales")
+    ax_t.set_xlabel("Tiempo (ms)")
+    ax_t.legend()
+    ax_t.grid(True)
 
-    ax2.plot(t * 1000, y_filt, color='#e74c3c', label="Filtrada")
-    ax2.set_title(f"Resultado tras Filtro {f_type}")
-    ax2.set_ylabel("Amplitud")
-    ax2.set_xlabel("Tiempo (ms)")
-    ax2.grid(True, alpha=0.3)
+    # Gráfico de Respuesta del Filtro (Punto 3 - Ecualizador)
+    ax_f = fig.add_subplot(gs[1, 0])
+    ax_f.plot(freq_axis, 20 * np.log10(np.abs(h) + 1e-9), color='green')
+    ax_f.set_title("Respuesta del Filtro (Magnitud)")
+    ax_f.set_ylabel("Ganancia (dB)")
+    ax_f.set_xlabel("Frecuencia (Hz)")
+    ax_f.set_ylim(-60, 5)
+    ax_f.grid(True)
+    if has_filter:
+        ax_f.axvline(f1, color='orange', linestyle=':', label='f1')
+        if f_type in ['bandpass', 'bandstop']:
+            ax_f.axvline(f2, color='orange', linestyle=':', label='f2')
 
+    # Gráfico del Espectro de la señal de salida
+    ax_s = fig.add_subplot(gs[1, 1])
+    n = len(y_filt)
+    yf = np.fft.rfft(y_filt)
+    xf = np.fft.rfftfreq(n, 1/fs)
+    ax_s.semilogy(xf, np.abs(yf), color='purple')
+    ax_s.set_title("Espectro de la Señal de Salida")
+    ax_s.set_xlabel("Frecuencia (Hz)")
+    ax_s.grid(True)
+    ax_s.set_xlim(0, fs/4) # Zoom en la zona de interés
+
+    plt.tight_layout()
     display(fig, target="plot-area", append=False)
+
+    # Info matemática
+    document.getElementById("math-display").style.display = "block"
+    document.getElementById("math-display").innerHTML = f"<b>Análisis:</b> Filtro orden 4 | Muestreo {fs}Hz | Nyquist {nyq}Hz"
 </script>
 </body>
 </html>
