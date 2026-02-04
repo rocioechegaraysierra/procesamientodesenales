@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sintetizador UNTREF</title>
+    <title>Sintetizador Avanzado - UNTREF</title>
     
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
@@ -23,25 +23,31 @@
         @keyframes load { from { width: 0%; } to { width: 98%; } }
         h1 { color: #2c3e50; text-align: center; font-size: 1.5em; border-bottom: 2px solid #d9534f; padding-bottom: 5px; }
         button { width: 100%; padding: 12px; background: #d9534f; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        label { font-size: 0.9em; font-weight: bold; }
-        select, input { margin-bottom: 10px; padding: 5px; width: 100%; }
-        input:disabled { opacity: 0.3; cursor: not-allowed; }
-        .disabled-label { color: #ccc; }
+        label { font-size: 0.9em; font-weight: bold; display: block; margin-top: 10px; }
+        select, input { margin-bottom: 5px; padding: 5px; width: 100%; box-sizing: border-box; }
+        .hidden { display: none; }
+        .filter-params { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; }
     </style>
 
     <script>
-      
-        function toggleCutoff() {
-            const filterType = document.getElementById("filter-type").value;
-            const cutoffSlider = document.getElementById("cutoff");
-            const cutoffLabel = document.getElementById("label-cutoff");
-            
-            if (filterType === "none") {
-                cutoffSlider.disabled = true;
-                cutoffLabel.classList.add("disabled-label");
+        function updateFilterUI() {
+            const type = document.getElementById("filter-type").value;
+            const divF1 = document.getElementById("div-f1");
+            const divF2 = document.getElementById("div-f2");
+            const labelF1 = document.getElementById("label-f1");
+
+            if (type === "none") {
+                divF1.classList.add("hidden");
+                divF2.classList.add("hidden");
+            } else if (type === "lowpass" || type === "highpass") {
+                divF1.classList.remove("hidden");
+                divF2.classList.add("hidden");
+                labelF1.innerText = "Frecuencia de Corte (Fc):";
             } else {
-                cutoffSlider.disabled = false;
-                cutoffLabel.classList.remove("disabled-label");
+                // Bandpass o Bandstop
+                divF1.classList.remove("hidden");
+                divF2.classList.remove("hidden");
+                labelF1.innerText = "Frecuencia Inicial (f1):";
             }
         }
     </script>
@@ -49,24 +55,24 @@
 <body>
 
 <div class="container">
-    <h1>Sintetizador de Señales</h1>
+    <h1>Procesamiento de Señales: Filtros Digitales</h1>
     
     <div id="loader">
-        <p>Iniciando módulos de Python...</p>
+        <p>Cargando librerías de señales...</p>
         <div class="bar"><div class="fill"></div></div>
     </div>
 
     <div id="main-ui" style="display:none;">
         <div class="controls-grid">
             <div>
-                <label>Frecuencia de Señal (f):</label>
+                <h3>Generación</h3>
+                <label>Frecuencia de la Señal (Hz):</label>
                 <input type="number" id="freq" value="440">
                 
-                <label>Muestreo (fs):</label>
+                <label>Frecuencia de Muestreo (fs):</label>
                 <select id="fs">
-                    <option value="8000">8000 Hz</option>
-                    <option value="44100" selected>44100 Hz</option>
-                    <option value="48000">48000 Hz</option>
+                    <option value="8000">8000 Hz (Telefonía)</option>
+                    <option value="44100" selected>44100 Hz (Audio CD)</option>
                 </select>
 
                 <label>Tipo de Onda:</label>
@@ -78,20 +84,31 @@
             </div>
 
             <div>
-                <label>Filtro Digital:</label>
-                <select id="filter-type" onchange="toggleCutoff()">
-                    <option value="none">Sin Filtro (Bypass)</option>
-                    <option value="lowpass">Pasa-Bajos</option>
-                    <option value="highpass">Pasa-Altos</option>
-                    <option value="bandpass">Pasa-Banda</option>
+                <h3>Filtrado LTI</h3>
+                <label>Tipo de Filtro:</label>
+                <select id="filter-type" onchange="updateFilterUI()">
+                    <option value="none">Bypass (Sin Filtro)</option>
+                    <option value="lowpass">Pasa-Bajos (Low-Pass)</option>
+                    <option value="highpass">Pasa-Altos (High-Pass)</option>
+                    <option value="bandpass">Pasa-Banda (Band-Pass)</option>
+                    <option value="bandstop">Elimina-Banda (Notch/Band-Stop)</option>
                 </select>
 
-                <label id="label-cutoff" class="disabled-label">Frecuencia de Corte (Fc):</label>
-                <input type="range" id="cutoff" min="100" max="8000" value="2000" disabled 
-                       oninput="document.getElementById('cutoff-val').innerText = this.value + ' Hz'">
-                <center><span id="cutoff-val">2000 Hz</span></center>
+                <div id="div-f1" class="hidden filter-params">
+                    <label id="label-f1">Frecuencia de Corte:</label>
+                    <input type="range" id="f1" min="20" max="10000" value="1000" 
+                           oninput="document.getElementById('val-f1').innerText = this.value + ' Hz'">
+                    <center><span id="val-f1">1000 Hz</span></center>
+                </div>
 
-                <button id="btn" py-click="run_process">Generar y Procesar</button>
+                <div id="div-f2" class="hidden filter-params">
+                    <label>Frecuencia Final (f2):</label>
+                    <input type="range" id="f2" min="20" max="10000" value="4000" 
+                           oninput="document.getElementById('val-f2').innerText = this.value + ' Hz'">
+                    <center><span id="val-f2">4000 Hz</span></center>
+                </div>
+
+                <button id="btn" py-click="run_process" style="margin-top:15px;">Procesar Señal</button>
             </div>
         </div>
 
@@ -107,58 +124,77 @@ from scipy import signal
 from pyscript import display
 from js import document
 
+# Quitar loader al iniciar
 document.getElementById("loader").style.display = "none"
 document.getElementById("main-ui").style.display = "block"
 
 def run_process(event):
-    f = float(document.getElementById("freq").value)
+    # Leer valores de la UI
+    f_signal = float(document.getElementById("freq").value)
     fs = int(document.getElementById("fs").value)
     w_type = document.getElementById("wave-type").value
     f_type = document.getElementById("filter-type").value
-    cutoff = float(document.getElementById("cutoff").value)
+    f1 = float(document.getElementById("f1").value)
+    f2 = float(document.getElementById("f2").value)
 
-    duration = 0.01 
+    # Configuración de tiempo 
+    duration = 4 / f_signal if f_signal > 0 else 0.01
     t = np.arange(0, duration, 1/fs)
     
+    # 1. Generación de la señal original
     if w_type == "sin":
-        y_raw = np.sin(2 * np.pi * f * t)
+        y_raw = np.sin(2 * np.pi * f_signal * t)
     elif w_type == "square":
-        y_raw = signal.square(2 * np.pi * f * t)
+        y_raw = signal.square(2 * np.pi * f_signal * t)
     elif w_type == "sawtooth":
-        y_raw = signal.sawtooth(2 * np.pi * f * t)
+        y_raw = signal.sawtooth(2 * np.pi * f_signal * t)
 
+    # 2. Aplicación de Filtros (Puntos 1 y 2 de la devolución)
     y_filt = y_raw.copy()
-    filter_active = False
-
-    if f_type != "none":
-        filter_active = True
-        nyq = 0.5 * fs
-        low_cut = min(0.95, cutoff / nyq)
-        if f_type == "lowpass":
-            b, a = signal.butter(4, low_cut, btype='low')
-        elif f_type == "highpass":
-            b, a = signal.butter(4, low_cut, btype='high')
-        elif f_type == "bandpass":
-            b, a = signal.butter(4, [max(0.01, low_cut*0.7), min(0.99, low_cut*1.3)], btype='band')
-        y_filt = signal.lfilter(b, a, y_raw)
-
-    math_info = f"<b>Muestreo:</b> {fs}Hz | <b>Nyquist:</b> {fs/2}Hz<br>"
-    math_info += f"<b>Filtro:</b> {'DESACTIVADO' if f_type == 'none' else f_type.upper() + ' (' + str(cutoff) + 'Hz)'}"
+    nyq = 0.5 * fs
     
+    try:
+        if f_type != "none":
+            # Normalización de frecuencias (f/Nyquist)
+            low = np.clip(f1 / nyq, 0.001, 0.999)
+            high = np.clip(f2 / nyq, 0.001, 0.999)
+
+            if f_type == "lowpass":
+                b, a = signal.butter(4, low, btype='low')
+            elif f_type == "highpass":
+                b, a = signal.butter(4, low, btype='high')
+            elif f_type == "bandpass":
+                # Ordenar f1 y f2 por si el usuario movió los sliders al revés
+                edges = sorted([low, high])
+                b, a = signal.butter(4, edges, btype='band')
+            elif f_type == "bandstop":
+                edges = sorted([low, high])
+                b, a = signal.butter(4, edges, btype='stop')
+            
+            y_filt = signal.lfilter(b, a, y_raw)
+    except Exception as e:
+        print(f"Error en filtro: {e}")
+
+    # Mostrar info técnica
+    info = f"<b>Estado:</b> Procesando señal {w_type} a {f_signal}Hz | <b>Filtro:</b> {f_type.upper()}"
     document.getElementById("math-display").style.display = "block"
-    document.getElementById("math-display").innerHTML = math_info
+    document.getElementById("math-display").innerHTML = info
 
+    # 3. Gráficos
     plt.close('all')
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6))
+    fig.tight_layout(pad=4.0)
     
-    ax1.plot(t, y_raw, color='blue')
-    ax1.set_title("Señal de Entrada (Ideal)")
+    ax1.plot(t * 1000, y_raw, color='#3498db', label="Original")
+    ax1.set_title("Señal de Entrada (Tiempo)")
+    ax1.set_ylabel("Amplitud")
+    ax1.set_xlabel("Tiempo (ms)")
     ax1.grid(True, alpha=0.3)
 
-    
-    title_color = 'green' if filter_active else 'red'
-    ax2.plot(t, y_filt, color='red', marker='o', markersize=4, linestyle='-')
-    ax2.set_title(f"Señal Muestreada {'+ Filtro' if filter_active else ''}", color=title_color, fontweight='bold')
+    ax2.plot(t * 1000, y_filt, color='#e74c3c', label="Filtrada")
+    ax2.set_title(f"Resultado tras Filtro {f_type}")
+    ax2.set_ylabel("Amplitud")
+    ax2.set_xlabel("Tiempo (ms)")
     ax2.grid(True, alpha=0.3)
 
     display(fig, target="plot-area", append=False)
