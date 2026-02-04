@@ -13,104 +13,97 @@
     </py-config>
 
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f0f2f5; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; background: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
-        .math-box { background: #f8fff9; padding: 12px; border-left: 5px solid #28a745; margin-bottom: 15px; font-family: monospace; font-size: 0.85em; }
-        #loader { text-align: center; padding: 40px; }
-        .bar { width: 100%; background: #eee; border-radius: 10px; height: 10px; overflow: hidden; margin-top: 10px; }
-        .fill { width: 0%; height: 100%; background: #d9534f; animation: load 8s forwards; }
-        @keyframes load { from { width: 0%; } to { width: 98%; } }
-        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #d9534f; padding-bottom: 5px; }
-        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        label { font-size: 0.9em; font-weight: bold; display: block; margin-top: 10px; }
-        select, input { margin-bottom: 5px; padding: 8px; width: 100%; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #eceff1; color: #37474f; }
+        .container { max-width: 1300px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .grid-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        .panel { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #cfd8dc; }
+        .math-results { background: #1e1e1e; color: #a6e22e; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.85em; margin-top: 15px; overflow-x: auto; border-left: 5px solid #d9534f; }
+        h3 { color: #d9534f; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 0; }
+        label { font-weight: bold; display: block; margin: 10px 0 5px; font-size: 0.9em; }
+        select, input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px; }
+        button { width: 100%; padding: 15px; background: #2c3e50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #d9534f; }
         .hidden { display: none; }
-        .file-input-area { background: #fff3e0; padding: 10px; border-radius: 8px; border: 1px dashed #ff9800; margin-top: 10px; }
     </style>
-
-    <script>
-        function updateFilterUI() {
-            const type = document.getElementById("filter-type").value;
-            document.getElementById("div-f1").classList.toggle("hidden", type === "none");
-            document.getElementById("div-f2").classList.toggle("hidden", !["bandpass", "bandstop"].includes(type));
-        }
-    </script>
 </head>
 <body>
 
 <div class="container">
-    <h1>Procesamiento de Señales</h1>
+    <h1 style="text-align:center; color: #2c3e50;">Sistema de Análisis y Filtrado de Señales</h1>
     
-    <div id="loader">
-        <p>Configurando entorno de señales...</p>
-        <div class="bar"><div class="fill"></div></div>
-    </div>
+    <div class="grid-layout">
+        <div class="panel">
+            <h3>Configuración</h3>
+            
+            <label>Entrada:</label>
+            <select id="input-mode" onchange="toggleInputs(this.value)">
+                <option value="gen">Generador Interno</option>
+                <option value="file">Archivo WAV</option>
+            </select>
 
-    <div id="main-ui" style="display:none;">
-        <div class="controls-grid">
-            <div>
-                <h3>1. Origen de la Señal</h3>
-                <label>Seleccionar Entrada:</label>
-                <select id="input-mode" onchange="document.getElementById('gen-controls').classList.toggle('hidden', this.value==='file'); document.getElementById('file-controls').classList.toggle('hidden', this.value==='gen');">
-                    <option value="gen">Generador de Funciones</option>
-                    <option value="file">Archivo de Audio (.WAV)</option>
-                </select>
-
-                <div id="gen-controls">
-                    <label>Frecuencia (Hz):</label>
-                    <input type="number" id="freq" value="440">
-                    <label>Onda:</label>
-                    <select id="wave-type">
-                        <option value="sin">Senoidal</option>
-                        <option value="square">Cuadrada</option>
-                        <option value="sawtooth">Diente de Sierra</option>
-                    </select>
-                </div>
-
-                <div id="file-controls" class="hidden file-input-area">
-                    <label>Cargar WAV (Mono, 16-bit):</label>
-                    <input type="file" id="file-upload" accept=".wav">
-                </div>
-
-                <label>Muestreo de Trabajo (fs):</label>
-                <select id="fs">
-                    <option value="8000">8000 Hz</option>
-                    <option value="44100" selected>44100 Hz</option>
+            <div id="gen-controls">
+                <label>Frecuencia Señal (f):</label>
+                <input type="number" id="freq" value="440">
+                <label>Tipo de Onda:</label>
+                <select id="wave-type">
+                    <option value="sin">Senoidal</option>
+                    <option value="square">Cuadrada</option>
+                    <option value="sawtooth">Diente de Sierra</option>
                 </select>
             </div>
 
-            <div>
-                <h3>2. Filtros Digitales</h3>
-                <label>Tipo:</label>
-                <select id="filter-type" onchange="updateFilterUI()">
-                    <option value="none">Bypass</option>
-                    <option value="lowpass">Pasa-Bajos</option>
-                    <option value="highpass">Pasa-Altos</option>
-                    <option value="bandpass">Pasa-Banda</option>
-                    <option value="bandstop">Rechaza-Banda</option>
-                </select>
+            <div id="file-controls" class="hidden">
+                <label>Archivo .wav:</label>
+                <input type="file" id="file-upload" accept=".wav">
+            </div>
 
-                <div id="div-f1" class="hidden">
-                    <label>Frecuencia f1 (Hz):</label>
-                    <input type="range" id="f1" min="20" max="15000" value="1000" oninput="document.getElementById('v1').innerText = this.value">
-                    <center><span id="v1">1000</span> Hz</center>
+            <label>Muestreo (fs):</label>
+            <select id="fs">
+                <option value="8000">8000 Hz</option>
+                <option value="44100" selected>44100 Hz</option>
+            </select>
+
+            <h3>Procesamiento LTI</h3>
+            <label>Tipo de Filtro:</label>
+            <select id="f-type" onchange="toggleFilter(this.value)">
+                <option value="none">Bypass</option>
+                <option value="lowpass">Pasa-Bajos (Butterworth)</option>
+                <option value="highpass">Pasa-Altos</option>
+                <option value="bandpass">Pasa-Banda</option>
+                <option value="bandstop">Rechaza-Banda</option>
+            </select>
+
+            <div id="filter-freqs" class="hidden">
+                <label id="l-f1">Frecuencia Corte 1:</label>
+                <input type="range" id="f1" min="20" max="10000" value="1000">
+                <div id="f2-box" class="hidden">
+                    <label>Frecuencia Corte 2:</label>
+                    <input type="range" id="f2" min="20" max="10000" value="3000">
                 </div>
+            </div>
 
-                <div id="div-f2" class="hidden">
-                    <label>Frecuencia f2 (Hz):</label>
-                    <input type="range" id="f2" min="20" max="15000" value="4000" oninput="document.getElementById('v2').innerText = this.value">
-                    <center><span id="v2">4000</span> Hz</center>
-                </div>
-
-                <button id="btn" py-click="run_process" style="margin-top:20px;">EJECUTAR ANÁLISIS</button>
+            <button id="run" py-click="run_analysis">ANALIZAR Y CALCULAR</button>
+            
+            <div id="output-text" class="math-results">
+                Esperando proceso...
             </div>
         </div>
 
-        <div id="math-display" class="math-box" style="display:none;"></div>
-        <div id="plot-area"></div>
+        <div id="plot-area">
+            </div>
     </div>
 </div>
+
+<script>
+    function toggleInputs(val) {
+        document.getElementById('gen-controls').classList.toggle('hidden', val==='file');
+        document.getElementById('file-controls').classList.toggle('hidden', val==='gen');
+    }
+    function toggleFilter(val) {
+        document.getElementById('filter-freqs').classList.toggle('hidden', val==='none');
+        document.getElementById('f2-box').classList.toggle('hidden', !['bandpass','bandstop'].includes(val));
+    }
+</script>
 
 <script type="py">
 import numpy as np
@@ -120,88 +113,96 @@ from pyscript import display
 from js import document, Uint8Array
 import asyncio
 
-document.getElementById("loader").style.display = "none"
-document.getElementById("main-ui").style.display = "block"
-
-async def run_process(event):
+async def run_analysis(event):
+    # --- 1. CAPTURA ---
     mode = document.getElementById("input-mode").value
     fs = int(document.getElementById("fs").value)
-    f_type = document.getElementById("filter-type").value
-    f1 = float(document.getElementById("f1").value)
-    f2 = float(document.getElementById("f2").value)
+    f_type = document.getElementById("f-type").value
     
     if mode == "gen":
         f_sig = float(document.getElementById("freq").value)
-        t = np.arange(0, 0.02, 1/fs)
-        w_type = document.getElementById("wave-type").value
-        if w_type == "sin": y_raw = np.sin(2 * np.pi * f_sig * t)
-        elif w_type == "square": y_raw = signal.square(2 * np.pi * f_sig * t)
+        t = np.arange(0, 0.05, 1/fs)
+        w = document.getElementById("wave-type").value
+        if w == "sin": y_raw = np.sin(2 * np.pi * f_sig * t)
+        elif w == "square": y_raw = signal.square(2 * np.pi * f_sig * t)
         else: y_raw = signal.sawtooth(2 * np.pi * f_sig * t)
     else:
-        file_list = document.getElementById("file-upload").files
-        if len(file_list) == 0:
-            return
-        
-        file = file_list.item(0)
-        array_buffer = await file.arrayBuffer()
-        uint8_view = Uint8Array.new(array_buffer)
-        
-        # Convertir buffer de JS a NumPy (saltando cabecera de 44 bytes del WAV)
-        raw_bytes = bytes(uint8_view)
-        # Interpretamos como 16-bit PCM (pequeño endian)
-        data_int16 = np.frombuffer(raw_bytes, dtype=np.int16, offset=44)
-        
-        # Normalizar a rango -1.0 a 1.0 y limitar muestras para visualización
-        y_raw = data_int16.astype(np.float32) / 32768.0
-        if len(y_raw) > 8000: y_raw = y_raw[:8000] 
+        file = document.getElementById("file-upload").files.item(0)
+        if not file: return
+        buf = await file.arrayBuffer()
+        y_raw = np.frombuffer(bytes(Uint8Array.new(buf)), dtype=np.int16, offset=44).astype(np.float32) / 32768.0
+        y_raw = y_raw[:int(fs*0.05)] # Tomar 50ms
         t = np.arange(len(y_raw)) / fs
 
-    # Filtrado LTI
+    # --- 2. FILTRADO Y CÁLCULOS ---
     nyq = 0.5 * fs
     b, a = [1.0], [1.0]
     if f_type != "none":
-        w1 = np.clip(f1 / nyq, 0.001, 0.99)
-        w2 = np.clip(f2 / nyq, 0.001, 0.99)
-        if f_type == "lowpass": b, a = signal.butter(4, w1, btype='low')
-        elif f_type == "highpass": b, a = signal.butter(4, w1, btype='high')
-        elif f_type == "bandpass": b, a = signal.butter(4, sorted([w1, w2]), btype='band')
-        elif f_type == "bandstop": b, a = signal.butter(4, sorted([w1, w2]), btype='stop')
-        y_filt = signal.lfilter(b, a, y_raw)
+        f1 = float(document.getElementById("f1").value)
+        f2 = float(document.getElementById("f2").value)
+        w1 = np.clip(f1/nyq, 0.001, 0.99)
+        w2 = np.clip(f2/nyq, 0.001, 0.99)
+        
+        if f_type == "lowpass": b, a = signal.butter(2, w1, btype='low')
+        elif f_type == "highpass": b, a = signal.butter(2, w1, btype='high')
+        else: b, a = signal.butter(2, sorted([w1, w2]), btype=f_type.replace('band',''))
+        
+        y_out = signal.lfilter(b, a, y_raw)
     else:
-        y_filt = y_raw
+        y_out = y_raw
 
-    # Graficación
+    # --- 3. ESTADÍSTICAS ---
+    rms = np.sqrt(np.mean(y_out**2))
+    peak = np.max(np.abs(y_out))
+    crest_factor = peak / rms if rms > 0 else 0
+    
+    # --- 4. TEXTO DE SALIDA (LOG) ---
+    log = f"RESULTADOS TÉCNICOS:\n"
+    log += f"--------------------\n"
+    log += f"Vrms: {rms:.4f} V\n"
+    log += f"Vpico: {peak:.4f} V\n"
+    log += f"Factor Cresta: {crest_factor:.2f}\n\n"
+    if f_type != "none":
+        log += f"COEFICIENTES FILTRO (b):\n{np.array2string(b, precision=4)}\n"
+        log += f"COEFICIENTES FILTRO (a):\n{np.array2string(a, precision=4)}\n\n"
+        log += f"ECUACIÓN EN DIFERENCIAS:\n"
+        log += f"y[n] = ({b[0]:.2f})x[n] + ({b[1]:.2f})x[n-1] ...\n"
+        log += f"       - ({a[1]:.2f})y[n-1] - ..."
+
+    document.getElementById("output-text").innerText = log
+
+    # --- 5. GRÁFICOS ---
     plt.close('all')
-    fig = plt.figure(figsize=(10, 8))
+    fig = plt.figure(figsize=(9, 10))
     
     # Tiempo
-    ax1 = fig.add_subplot(2, 1, 1)
-    ax1.plot(t * 1000, y_raw, label="Original", alpha=0.4, color='gray')
-    ax1.plot(t * 1000, y_filt, label="Filtrada", color='blue')
-    ax1.set_title("Dominio del Tiempo (ms)")
-    ax1.grid(True)
+    ax1 = fig.add_subplot(3, 1, 1)
+    ax1.plot(t*1000, y_raw, 'gray', alpha=0.5, label="Original")
+    ax1.plot(t*1000, y_out, 'red', label="Procesada")
+    ax1.set_title("Dominio del Tiempo")
+    ax1.set_xlabel("ms")
     ax1.legend()
+    ax1.grid(True)
 
-    # Respuesta del Filtro
-    ax2 = fig.add_subplot(2, 2, 3)
-    w, h = signal.freqz(b, a)
-    ax2.plot(w*nyq/np.pi, 20*np.log10(np.abs(h)+1e-6), color='green')
-    ax2.set_title("Perfil del Filtro (dB)")
-    ax2.set_xlabel("Hz")
-    ax2.grid(True)
+    # Respuesta en Frecuencia (Filtro)
+    ax2 = fig.add_subplot(3, 1, 2)
+    w_freq, h = signal.freqz(b, a)
+    ax2.semilogx(w_freq*nyq/np.pi, 20*np.log10(np.abs(h)+1e-6), color='green')
+    ax2.set_title("Respuesta del Sistema (Magnitud)")
+    ax2.set_ylabel("dB")
+    ax2.grid(which='both', axis='both')
 
-    # Espectro
-    ax3 = fig.add_subplot(2, 2, 4)
-    yf = np.fft.rfft(y_filt)
-    xf = np.fft.rfftfreq(len(y_filt), 1/fs)
-    ax3.semilogy(xf, np.abs(yf), color='purple')
-    ax3.set_title("Análisis Espectral (Salida)")
+    # Espectro de Potencia (Salida)
+    ax3 = fig.add_subplot(3, 1, 3)
+    f_axis, psd = signal.welch(y_out, fs, nperseg=min(len(y_out), 256))
+    ax3.semilogy(f_axis, psd, color='purple')
+    ax3.set_title("Densidad Espectral de Potencia (PSD)")
+    ax3.set_xlabel("Hz")
     ax3.grid(True)
 
     plt.tight_layout()
     display(fig, target="plot-area", append=False)
-    document.getElementById("math-display").style.display = "block"
-    document.getElementById("math-display").innerHTML = f"Señal WAV procesada. Muestras analizadas: {len(y_raw)}"
+
 </script>
 </body>
 </html>
