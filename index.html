@@ -35,7 +35,7 @@
         }
 
         h1 { 
-            text-align: center; font-size: 2rem; margin: 0 0 20px 0; 
+            text-align: center; font-size: 1.3rem; margin: 5px 0 20px 0; 
             text-transform: uppercase; letter-spacing: 4px; font-weight: 800;
             background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;
             border: 1px solid var(--glass-border);
@@ -118,12 +118,13 @@
         .formula { color: #00ffcc; font-weight: bold; font-family: 'Consolas', monospace; display: block; margin-top: 5px; }
         .hidden { display: none; }
         .val-num { color: var(--accent-red); float: right; font-weight: bold; }
+        .desc-text { font-size: 0.75rem; opacity: 0.8; display: block; margin-top: 4px; line-height: 1.2; }
     </style>
 </head>
 <body>
 
 <div class="main-wrapper">
-    <h1 style="text-align:center; font-size: 1.3rem; margin: 5px 0;">SISTEMA DE ANÁLISIS Y FILTRADO DE SEÑALES</h1>
+    <h1>SISTEMA DE ANÁLISIS Y FILTRADO DE SEÑALES</h1>
     
     <div class="grid-layout">
         <div class="panel">
@@ -272,6 +273,9 @@ async def run_analysis(event):
 
         rms = np.sqrt(np.mean(y_out**2))
         z, p, k = signal.tf2zpk(b, a)
+        
+        sqnr = 6.02 * 16 + 1.76 
+        tipo_filtro = "IIR (Recursivo)" if (len(a) > 1 and not np.all(a[1:] == 0)) else "FIR (No recursivo)"
 
         plt.close('all')
         fig = plt.figure(figsize=(8, 12))
@@ -301,18 +305,34 @@ async def run_analysis(event):
 
         obs_html = f"""
         <div class="obs-item">
-            <strong>U1: POTENCIA</strong><br>
+            <strong>U1: ENERGÍA Y POTENCIA</strong>
+            <span class="desc-text">Como la señal es periódica, su energía total es infinita pero su potencia media es finita.</span>
             <span class="formula">P = {rms**2:.4f} W</span>
         </div>
         <div class="obs-item">
-            <strong>U6: NYQUIST</strong><br>
-            <span class="formula">fs({fs}) > 2·f({2*f_sig})</span><br>
-            {'✅ OK' if fs > 2*f_sig else '⚠️ ALIASING'}
+            <strong>U4: ANÁLISIS ESPECTRAL</strong>
+            <span class="desc-text">Representa la frecuencia fundamental (f0) que define el tono principal de la señal analizada.</span>
+            <span class="formula">f₀ = {f_sig} Hz</span>
         </div>
         <div class="obs-item">
-            <strong>TRANSF. Z:</strong><br>
-            Polo Máx: <span class="formula">{np.max(np.abs(p)) if len(p)>0 else 0:.3f}</span><br>
-            {'✅ Estable' if np.all(np.abs(p)<1) else '❌ Inestable'}
+            <strong>U6: MUESTREO (NYQUIST)</strong>
+            <span class="desc-text">Para evitar el aliasing (frecuencias falsas), la tasa de muestreo debe duplicar la frecuencia máxima.</span>
+            <span class="formula">fs > 2·f : {'✅ Cumple' if fs > 2*f_sig else '⚠️ Aliasing'}</span>
+        </div>
+        <div class="obs-item">
+            <strong>U6: CUANTIZACIÓN</strong>
+            <span class="desc-text">Relación señal-ruido teórica para 16 bits. Indica la calidad de la resolución en amplitud.</span>
+            <span class="formula">SQNR ≈ {sqnr:.2f} dB</span>
+        </div>
+        <div class="obs-item">
+            <strong>U8: FILTROS DIGITALES</strong>
+            <span class="desc-text">Determina si el sistema usa realimentación (IIR) o solo valores previos de entrada (FIR).</span>
+            <span class="formula">Tipo: {tipo_filtro}</span>
+        </div>
+        <div class="obs-item">
+            <strong>TRANSF. Z: ESTABILIDAD</strong>
+            <span class="desc-text">Un sistema es estable si todos sus polos están dentro del círculo unitario (módulo < 1).</span>
+            <span class="formula">Polo Máx: {np.max(np.abs(p)) if len(p)>0 else 0:.3f} : {'✅ OK' if np.all(np.abs(p)<1) else '❌ Inestable'}</span>
         </div>
         """
         document.getElementById("obs-content").innerHTML = obs_html
