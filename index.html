@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sintetizador - UNTREF</title>
+    <title>Sintetizador - Procesamiento de Señales</title>
     
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
@@ -13,24 +13,31 @@
     </py-config>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #eceff1; color: #37474f; }
-        .container { max-width: 1300px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .grid-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-        .panel { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #cfd8dc; }
-        .math-results { background: #1e1e1e; color: #a6e22e; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.85em; margin-top: 15px; overflow-x: auto; border-left: 5px solid #d9534f; }
-        h3 { color: #d9534f; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 0; }
+        :root {
+            --navy: #0a192f;
+            --cream: #fdfaf1;
+            --red: #e63946;
+        }
+        body { font-family: 'Arial Black', sans-serif; padding: 20px; background-color: var(--cream); color: var(--navy); }
+        .container { max-width: 1500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .grid-layout { display: grid; grid-template-columns: 350px 1fr 350px; gap: 20px; }
+        .panel { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 2px solid var(--navy); }
+        .math-results { background: var(--navy); color: #a6e22e; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.85em; margin-top: 15px; overflow-x: auto; border-left: 5px solid var(--red); }
+        h3 { color: var(--red); border-bottom: 2px solid var(--red); padding-bottom: 5px; margin-top: 0; text-transform: uppercase; }
         label { font-weight: bold; display: block; margin: 10px 0 5px; font-size: 0.9em; }
         select, input { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px; }
-        button { width: 100%; padding: 15px; background: #2c3e50; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { background: #d9534f; }
+        button { width: 100%; padding: 15px; background: var(--navy); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: var(--red); }
         .hidden { display: none; }
-        .val-num { color: #d9534f; float: right; }
+        .val-num { color: var(--red); float: right; }
+        .obs-item { margin-bottom: 12px; font-family: 'Segoe UI', sans-serif; font-size: 0.82em; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+        .formula { color: var(--red); font-weight: bold; font-family: 'serif'; font-size: 1.1em; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="text-align:center; color: #2c3e50;">Sistema de Análisis y Filtrado de Señales</h1>
+    <h1 style="text-align:center; color: var(--navy); margin-bottom: 30px;">SISTEMA DE ANÁLISIS Y FILTRADO DE SEÑALES</h1>
     
     <div class="grid-layout">
         <div class="panel">
@@ -85,12 +92,17 @@
 
             <button id="run" py-click="run_analysis">ANALIZAR Y CALCULAR</button>
             
-            <div id="output-text" class="math-results">
-                Esperando proceso...
-            </div>
+            <div id="output-text" class="math-results">Esperando proceso...</div>
         </div>
 
         <div id="plot-area"></div>
+
+        <div class="panel">
+            <h3>Observaciones Técnicas</h3>
+            <div id="obs-content">
+                <p>Realice un análisis para vincular con las unidades del programa.</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -111,14 +123,13 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from pyscript import display
 from js import document, Uint8Array
-import asyncio
 
 async def run_analysis(event):
-    # --- 1. CAPTURA ---
     mode = document.getElementById("input-mode").value
     fs = int(document.getElementById("fs").value)
     f_type = document.getElementById("f-type").value
     
+    # 1. Captura de Señal (Unidad 1)
     if mode == "gen":
         f_sig = float(document.getElementById("freq").value)
         t = np.arange(0, 0.05, 1/fs)
@@ -131,84 +142,90 @@ async def run_analysis(event):
         if not file: return
         buf = await file.arrayBuffer()
         y_raw = np.frombuffer(bytes(Uint8Array.new(buf)), dtype=np.int16, offset=44).astype(np.float32) / 32768.0
-        y_raw = y_raw[:int(fs*0.05)] 
+        y_raw = y_raw[:int(fs*0.05)]
         t = np.arange(len(y_raw)) / fs
+        f_sig = 0 # Valor genérico para archivo
 
-    # --- 2. FILTRADO Y CÁLCULOS ---
+    # 2. Diseño de Filtro LTI (Unidad 8 y Transf. Z)
     nyq = 0.5 * fs
     b, a = [1.0], [1.0]
-    f1, f2 = 0, 0
     if f_type != "none":
         f1 = float(document.getElementById("f1").value)
         f2 = float(document.getElementById("f2").value)
         w1 = np.clip(f1/nyq, 0.001, 0.99)
-        w2 = np.clip(f2/nyq, 0.001, 0.99)
-        
-        if f_type == "lowpass": b, a = signal.butter(2, w1, btype='low')
-        elif f_type == "highpass": b, a = signal.butter(2, w1, btype='high')
-        else: b, a = signal.butter(2, sorted([w1, w2]), btype=f_type.replace('band',''))
-        
+        if f_type in ['bandpass', 'bandstop']:
+            w2 = np.clip(f2/nyq, 0.001, 0.99)
+            b, a = signal.butter(2, sorted([w1, w2]), btype=f_type.replace('band',''))
+        else:
+            b, a = signal.butter(2, w1, btype=f_type)
         y_out = signal.lfilter(b, a, y_raw)
     else:
         y_out = y_raw
 
-    # --- 3. ESTADÍSTICAS ---
+    # 3. Cálculos de Parámetros
     rms = np.sqrt(np.mean(y_out**2))
-    peak = np.max(np.abs(y_out))
-    crest_factor = peak / rms if rms > 0 else 0
-    
-    # --- 4. TEXTO DE SALIDA (LOG) ---
-    log = f"RESULTADOS TÉCNICOS:\n"
-    log += f"--------------------\n"
-    log += f"Vrms: {rms:.4f} V\n"
-    log += f"Vpico: {peak:.4f} V\n"
-    log += f"Factor Cresta: {crest_factor:.2f}\n\n"
-    if f_type != "none":
-        log += f"VALORES DE CORTE SELECCIONADOS:\n"
-        log += f"f1: {f1} Hz" + (f" | f2: {f2} Hz\n" if f_type in ['bandpass','bandstop'] else "\n")
-        log += f"\nCOEFICIENTES FILTRO (b):\n{np.array2string(b, precision=4)}\n"
-        log += f"COEFICIENTES FILTRO (a):\n{np.array2string(a, precision=4)}\n\n"
-        log += f"ECUACIÓN EN DIFERENCIAS:\n"
-        log += f"y[n] = ({b[0]:.2f})x[n] + ({b[1]:.2f})x[n-1] ...\n"
-        log += f"       - ({a[1]:.2f})y[n-1] - ..."
+    z, p, k = signal.tf2zpk(b, a)
+    max_pole = np.max(np.abs(p))
 
-    document.getElementById("output-text").innerText = log
-
-    # --- 5. GRÁFICOS ---
+    # 4. Gráficos
     plt.close('all')
-    fig = plt.figure(figsize=(9, 10))
+    fig = plt.figure(figsize=(9, 12))
+    fig.patch.set_facecolor('#fdfaf1')
     
+    # Tiempo
     ax1 = fig.add_subplot(3, 1, 1)
-    ax1.plot(t*1000, y_raw, 'gray', alpha=0.5, label="Original")
-    ax1.plot(t*1000, y_out, 'red', label="Procesada")
-    ax1.set_title("Dominio del Tiempo")
-    ax1.set_xlabel("ms")
-    ax1.legend()
-    ax1.grid(True)
+    ax1.plot(t*1000, y_raw, color='gray', alpha=0.3, label="Entrada")
+    ax1.plot(t*1000, y_out, color='#e63946', label="Salida")
+    ax1.set_title("DOMINIO DEL TIEMPO (CONVOLUCIÓN LTI)")
+    ax1.grid(True); ax1.legend()
 
+    # Frecuencia
     ax2 = fig.add_subplot(3, 1, 2)
-    w_freq, h = signal.freqz(b, a)
-    ax2.semilogx(w_freq*nyq/np.pi, 20*np.log10(np.abs(h)+1e-6), color='green')
-    ax2.set_title("Respuesta del Sistema (Magnitud)")
-    ax2.set_ylabel("dB")
-    ax2.grid(which='both', axis='both')
-    
-    # Líneas de referencia para la frecuencia de corte
-    if f_type != "none":
-        ax2.axvline(f1, color='orange', linestyle='--', alpha=0.7, label=f'f1: {f1}Hz')
-        if f_type in ['bandpass', 'bandstop']:
-            ax2.axvline(f2, color='orange', linestyle='--', alpha=0.7, label=f'f2: {f2}Hz')
-        ax2.legend(fontsize='small')
+    w_f, h = signal.freqz(b, a)
+    ax2.semilogx(w_f*nyq/np.pi, 20*np.log10(np.abs(h)+1e-6), color='#0a192f')
+    ax2.set_title("RESPUESTA EN FRECUENCIA H(Ω) [dB]")
+    ax2.grid(True, which='both')
 
+    # Plano Z
     ax3 = fig.add_subplot(3, 1, 3)
-    f_axis, psd = signal.welch(y_out, fs, nperseg=min(len(y_out), 256))
-    ax3.semilogy(f_axis, psd, color='purple')
-    ax3.set_title("Densidad Espectral de Potencia (PSD)")
-    ax3.set_xlabel("Hz")
-    ax3.grid(True)
+    theta = np.linspace(0, 2*np.pi, 100)
+    ax3.plot(np.cos(theta), np.sin(theta), color='gray', linestyle='--')
+    ax3.scatter(np.real(z), np.imag(z), s=80, marker='o', facecolors='none', edgecolors='#0a192f', label='Ceros')
+    ax3.scatter(np.real(p), np.imag(p), s=80, marker='x', color='#e63946', label='Polos')
+    ax3.set_title("PLANO Z: POLOS Y CEROS")
+    ax3.set_xlim([-1.2, 1.2]); ax3.set_ylim([-1.2, 1.2])
+    ax3.axhline(0, color='black', lw=0.5); ax3.axvline(0, color='black', lw=0.5)
+    ax3.legend()
 
-    plt.tight_layout()
     display(fig, target="plot-area", append=False)
+
+    # 5. Llenado del Panel de Observaciones (VINCULACIÓN TEÓRICA)
+    obs_html = f"""
+    <div class="obs-item">
+        <strong>U1: CLASIFICACIÓN</strong><br>
+        Potencia Media Calculada:<br>
+        <span class="formula">P = lim (1/T) ∫|x(t)|² dt = {rms**2:.4f} W</span>
+    </div>
+    <div class="obs-item">
+        <strong>U2: SISTEMAS LTI</strong><br>
+        La salida se obtiene mediante:<br>
+        <span class="formula">y[n] = x[n] * h[n]</span>
+    </div>
+    <div class="obs-item">
+        <strong>U6: MUESTREO (NYQUIST)</strong><br>
+        Frecuencia Nyquist: {nyq} Hz.<br>
+        <span class="formula">fs > 2·fmax → {fs} > {2*f_sig}</span><br>
+        Estado: {'✅ OK' if fs > 2*f_sig else '⚠️ ALIASING'}
+    </div>
+    <div class="obs-item">
+        <strong>TRANSF. Z: ESTABILIDAD</strong><br>
+        Condición: |z| < 1<br>
+        Módulo máx polo: <span class="formula">{max_pole:.3f}</span><br>
+        Estado: {'✅ Estable' if max_pole < 1.0 else '❌ Inestable'}
+    </div>
+    """
+    document.getElementById("obs-content").innerHTML = obs_html
+    document.getElementById("output-text").innerText = f"Vrms: {rms:.4f} V\nFactor Cresta: {np.max(np.abs(y_out))/rms:.2f}"
 
 </script>
 </body>
