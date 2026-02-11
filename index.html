@@ -40,7 +40,6 @@
             border: 2px solid var(--navy); display: flex; flex-direction: column; overflow-y: auto; 
         }
 
-        /* ÁREA DE GRÁFICOS CORREGIDA */
         #plot-area { 
             background: white; border-radius: 10px; border: 2px solid var(--navy); 
             overflow-y: auto; padding: 10px;
@@ -115,8 +114,14 @@
 
             <label>Muestreo (fs):</label>
             <select id="fs">
-                <option value="8000">8000 Hz</option>
-                <option value="44100" selected>44100 Hz</option>
+                <option value="8000">8000 Hz (Telefónico)</option>
+                <option value="16000">16000 Hz (Voz HD)</option>
+                <option value="22050">22050 Hz (Baja calidad)</option>
+                <option value="32000">32000 Hz (Radio Digital)</option>
+                <option value="44100" selected>44100 Hz (CD Audio)</option>
+                <option value="48000">48000 Hz (DVD/Video)</option>
+                <option value="88200">88200 Hz (Estudio)</option>
+                <option value="96000">96000 Hz (Alta Fidelidad)</option>
             </select>
 
             <h3>Procesamiento LTI</h3>
