@@ -413,41 +413,48 @@ async def run_analysis(event):
         plt.tight_layout()
         display(fig, target="plot-area", append=False)
 
+
         obs_html = f"""
         <div class="obs-item">
-            <strong>U1: ENERGÍA Y POTENCIA</strong>
-            <span class="desc-text">Como la señal es periódica, su energía total es infinita pero su potencia media es finita.</span>
-            <span class="formula">P = {rms**2:.4f} W</span>
+            <strong>U1: NATURALEZA Y CLASIFICACIÓN</strong>
+            <span class="desc-text">Una señal es un patrón de variación de una variable respecto a otra. Esta señal es periódica, por lo que su energía es infinita y su potencia media es finita.</span>
+            <span class="formula">P = {rms**2:.4f} W | E = ∞</span>
         </div>
+
         <div class="obs-item">
-    <strong>U2: MECANISMO DE CONVOLUCIÓN</strong>
-    <span class="desc-text">La señal procesada es el resultado de la convolución entre la entrada y la respuesta h[n].</span>
-    <span class="formula">y[n] = x[n] * h[n]</span>
-</div>
-        <div class="obs-item">
-            <strong>U4: ANÁLISIS ESPECTRAL</strong>
-            <span class="desc-text">Representa la frecuencia fundamental (f0) que define el tono principal de la señal analizada.</span>
-            <span class="formula">f₀ = {f_sig} Hz</span>
+            <strong>U2: SISTEMAS LTI Y CONVOLUCIÓN</strong>
+            <span class="desc-text">La salida y[n] se obtiene mediante la suma ponderada de las entradas pasadas según la respuesta al impulso h[n]. Es el "mezclado" de la entrada con la memoria del sistema.</span>
+            <span class="formula">y[n] = Σ x[k] · h[n-k]</span>
         </div>
+
         <div class="obs-item">
-            <strong>U6: MUESTREO (NYQUIST)</strong>
-            <span class="desc-text">Para evitar el aliasing (frecuencias falsas), la tasa de muestreo debe duplicar la frecuencia máxima.</span>
-            <span class="formula">fs > 2·f : {'✅ Cumple' if fs > 2*f_sig else '⚠️ Aliasing'}</span>
+            <strong>U4: ANÁLISIS DE FOURIER (TFTD)</strong>
+            <span class="desc-text">Permite descomponer la señal en el dominio de la frecuencia. La convolución en el tiempo equivale a una multiplicación en frecuencia.</span>
+            <span class="formula">X(Ω) = Σ x[n] · e^(-jΩn)</span>
         </div>
+
         <div class="obs-item">
-            <strong>U6: CUANTIZACIÓN</strong>
-            <span class="desc-text">Relación señal-ruido teórica para 16 bits. Indica la calidad de la resolución en amplitud.</span>
-            <span class="formula">SQNR ≈ {sqnr:.2f} dB</span>
+            <strong>U6: MUESTREO Y CUANTIZACIÓN</strong>
+            <span class="desc-text">Para evitar el Aliasing, se requiere fs > 2·fmax. Cada bit extra en la cuantización mejora la relación señal-ruido en ~6 dB.</span>
+            <span class="formula">fs: {fs} Hz > {2*f_sig} Hz | SQNR ≈ {sqnr:.2f} dB</span>
         </div>
+
+        <div class="obs-item">
+            <strong>U7: VENTANEO Y TRUNCAMIENTO</strong>
+            <span class="desc-text">Al procesar secuencias finitas, se usa una ventana que produce "fugas" (leakage) de energía hacia frecuencias vecinas.</span>
+            <span class="formula">X(Ω) = (1/2π) [Y(Ω) * W(Ω)]</span>
+        </div>
+
         <div class="obs-item">
             <strong>U8: FILTROS DIGITALES</strong>
-            <span class="desc-text">Determina si el sistema usa realimentación (IIR) o solo valores previos de entrada (FIR).</span>
-            <span class="formula">Tipo: {tipo_filtro}</span>
+            <span class="desc-text">Los filtros {tipo_filtro.split()[0]} alteran el contenido frecuencial. Los IIR son eficientes pero pueden ser inestables; los FIR son siempre estables.</span>
+            <span class="formula">H(z) = B(z) / A(z)</span>
         </div>
+
         <div class="obs-item">
             <strong>TRANSF. Z: ESTABILIDAD</strong>
-            <span class="desc-text">Un sistema es estable si todos sus polos están dentro del círculo unitario (módulo < 1).</span>
-            <span class="formula">Polo Máx: {np.max(np.abs(p)) if len(p)>0 else 0:.3f} : {'✅ OK' if np.all(np.abs(p)<1) else '❌ Inestable'}</span>
+            <span class="desc-text">Un sistema causal es estable si todos sus polos están dentro del círculo unitario (|z| < 1).</span>
+            <span class="formula">|z_max| = {np.max(np.abs(p)) if len(p)>0 else 0:.3f} {'✅' if np.all(np.abs(p)<1) else '❌'}</span>
         </div>
         """
         document.getElementById("obs-content").innerHTML = obs_html
