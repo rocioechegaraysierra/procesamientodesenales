@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sintetizador - Procesamiento de Señales</title>
-    
+
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
 
@@ -21,208 +22,312 @@
             --bg-gradient: linear-gradient(135deg, #2c3e50 0%, #000000 100%);
         }
 
-        html, body { 
-            height: 100%; margin: 0; overflow: hidden; 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--bg-gradient); 
-            color: var(--text-main); 
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
         }
 
         .main-wrapper {
-            display: flex; flex-direction: column; height: 100vh;
-            padding: 20px; box-sizing: border-box;
-            background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 70%);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
         }
 
-        h1 { 
-            text-align: center; font-size: 1.3rem; margin: 5px 0 20px 0; 
-            text-transform: uppercase; letter-spacing: 4px; font-weight: 800;
-            background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;
+        h1 {
+            text-align: center;
+            font-size: 1.3rem;
+            margin: 5px 0 20px 0;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
             border: 1px solid var(--glass-border);
         }
 
-        .grid-layout { 
-            display: grid; grid-template-columns: 350px 1fr 350px; 
-            gap: 20px; flex: 1; min-height: 0; 
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
         }
 
-        .panel { 
-            background: var(--glass-bg); 
+        .panel {
+            background: var(--glass-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            padding: 20px; border-radius: 20px; 
-            border: 1px solid var(--glass-border); 
-            display: flex; flex-direction: column; overflow-y: auto; 
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        #plot-area { 
-            background: rgba(255, 255, 255, 0.05); 
-            border-radius: 20px; border: 1px solid var(--glass-border); 
-            overflow-y: auto; padding: 15px;
+        #plot-area {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            overflow-y: auto;
+            padding: 15px;
             backdrop-filter: blur(4px);
         }
 
         .status-bar {
-            padding: 10px 20px; font-size: 0.85rem;
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.5); border-radius: 30px; margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 30px;
+            margin-top: 15px;
             border: 1px solid var(--glass-border);
         }
 
         .loader {
-            width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2);
-            border-bottom-color: var(--accent-red); border-radius: 50%;
-            display: inline-block; animation: rotation 1s linear infinite; margin-right: 10px;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-bottom-color: var(--accent-red);
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+            margin-right: 10px;
         }
 
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
 
-        .math-results { 
-            background: rgba(0,0,0,0.4); color: #00ffcc; padding: 12px; border-radius: 12px; 
-            font-family: 'Consolas', monospace; font-size: 0.8rem; margin-top: 15px; 
-            border: 1px solid var(--glass-border); white-space: pre-wrap;
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
-        h3 { 
-            color: var(--text-main); font-size: 1.1rem; margin-top: 0; 
-            text-transform: uppercase; letter-spacing: 1px;
-            border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; margin-bottom: 15px;
+        .math-results {
+            background: rgba(0, 0, 0, 0.4);
+            color: #00ffcc;
+            padding: 12px;
+            border-radius: 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            margin-top: 15px;
+            border: 1px solid var(--glass-border);
+            white-space: pre-wrap;
+        }
+
+        h3 {
+            color: var(--text-main);
+            font-size: 1.1rem;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
             text-align: center;
         }
 
-        label { font-weight: 300; display: block; margin: 12px 0 5px; font-size: 0.85rem; opacity: 0.9; }
-        
-        select, input { 
-            width: 100%; padding: 10px; border-radius: 8px; 
-            border: 1px solid var(--glass-border); margin-bottom: 10px; 
-            font-size: 0.85rem; background: rgba(255,255,255,0.1); color: white;
+        label {
+            font-weight: 300;
+            display: block;
+            margin: 12px 0 5px;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
             outline: none;
         }
-        
-        option { background: #2c3e50; color: white; }
 
-        button { 
-            width: 100%; padding: 16px; background: rgba(255,255,255,0.1); color: white; 
-            border: 1px solid var(--glass-border); border-radius: 12px; cursor: pointer; 
-            font-weight: bold; font-size: 0.9rem; text-transform: uppercase;
-            transition: 0.3s; margin-top: 10px;
+        option {
+            background: #2c3e50;
+            color: white;
         }
-        button:hover { background: var(--accent-red); box-shadow: 0 0 15px var(--accent-red); }
 
-        .obs-item { 
-            margin-bottom: 15px; font-size: 0.85rem; 
-            background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;
+        button {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: var(--accent-red);
+            box-shadow: 0 0 15px var(--accent-red);
+        }
+
+        .obs-item {
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 12px;
             border-left: 3px solid var(--accent-red);
         }
-        .formula { color: #00ffcc; font-weight: bold; font-family: 'Consolas', monospace; display: block; margin-top: 5px; }
-        .hidden { display: none; }
-        .val-num { color: var(--accent-red); float: right; font-weight: bold; }
-        .desc-text { font-size: 0.75rem; opacity: 0.8; display: block; margin-top: 4px; line-height: 1.2; }
+
+        .formula {
+            color: #00ffcc;
+            font-weight: bold;
+            font-family: 'Consolas', monospace;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .val-num {
+            color: var(--accent-red);
+            float: right;
+            font-weight: bold;
+        }
+
+        .desc-text {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            display: block;
+            margin-top: 4px;
+            line-height: 1.2;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="main-wrapper">
-    <h1>SISTEMA DE ANÁLISIS Y FILTRADO DE SEÑALES</h1>
-    
-    <div class="grid-layout">
-        <div class="panel">
-            <h3>Configuración</h3>
-            <label>Entrada:</label>
-            <select id="input-mode" onchange="toggleInputs(this.value)">
-                <option value="gen">Generador Interno</option>
-                <option value="file">Archivo WAV</option>
-            </select>
+    <div class="main-wrapper">
+        <h1>SISTEMA DE ANÁLISIS Y FILTRADO DE SEÑALES</h1>
 
-            <div id="gen-controls">
-                <label>Frecuencia Señal (f):</label>
-                <input type="number" id="freq" value="440">
-                <label>Tipo de Onda:</label>
-                <select id="wave-type">
-                    <option value="sin">Senoidal</option>
-                    <option value="square">Cuadrada</option>
-                    <option value="sawtooth">Diente de Sierra</option>
+        <div class="grid-layout">
+            <div class="panel">
+                <h3>Configuración</h3>
+                <label>Entrada:</label>
+                <select id="input-mode" onchange="toggleInputs(this.value)">
+                    <option value="gen">Generador Interno</option>
+                    <option value="file">Archivo WAV</option>
                 </select>
+
+                <div id="gen-controls">
+                    <label>Frecuencia Señal (f):</label>
+                    <input type="number" id="freq" value="440">
+                    <label>Tipo de Onda:</label>
+                    <select id="wave-type">
+                        <option value="sin">Senoidal</option>
+                        <option value="square">Cuadrada</option>
+                        <option value="sawtooth">Diente de Sierra</option>
+                    </select>
+                </div>
+
+                <div id="file-controls" class="hidden">
+                    <label>Archivo .wav:</label>
+                    <input type="file" id="file-upload" accept=".wav">
+                </div>
+
+                <label>Muestreo (fs):</label>
+                <select id="fs">
+                    <option value="8000">8000 Hz (Telefónico)</option>
+                    <option value="16000">16000 Hz (Voz HD)</option>
+                    <option value="22050">22050 Hz (Baja calidad)</option>
+                    <option value="32000">32000 Hz (Radio Digital)</option>
+                    <option value="44100" selected>44100 Hz (CD Audio)</option>
+                    <option value="48000">48000 Hz (DVD/Video)</option>
+                    <option value="88200">88200 Hz (Estudio)</option>
+                    <option value="96000">96000 Hz (Alta Fidelidad)</option>
+                </select>
+
+                <h3>Procesamiento LTI</h3>
+                <label>Tipo de Filtro:</label>
+                <select id="f-type" onchange="toggleFilter(this.value)">
+                    <option value="none">Bypass</option>
+                    <option value="lowpass">Pasa-Bajos</option>
+                    <option value="highpass">Pasa-Altos</option>
+                    <option value="bandpass">Pasa-Banda</option>
+                    <option value="bandstop">Rechaza-Banda</option>
+                </select>
+
+                <div id="filter-freqs" class="hidden">
+                    <label>Frecuencia Corte 1: <span id="v1" class="val-num">1000</span> Hz</label>
+                    <input type="range" id="f1" min="20" max="15000" value="1000"
+                        oninput="document.getElementById('v1').innerText = this.value">
+                    <div id="f2-box" class="hidden">
+                        <label>Frecuencia Corte 2: <span id="v2" class="val-num">3000</span> Hz</label>
+                        <input type="range" id="f2" min="20" max="15000" value="3000"
+                            oninput="document.getElementById('v2').innerText = this.value">
+                    </div>
+                </div>
+
+                <button id="run" py-click="run_analysis">ANALIZAR</button>
+                <div id="output-text" class="math-results">Esperando proceso...</div>
             </div>
 
-            <div id="file-controls" class="hidden">
-                <label>Archivo .wav:</label>
-                <input type="file" id="file-upload" accept=".wav">
+            <div id="plot-area">
+                <p style="text-align:center; margin-top:20%;">Presione ANALIZAR para generar los gráficos</p>
             </div>
 
-            <label>Muestreo (fs):</label>
-            <select id="fs">
-                <option value="8000">8000 Hz (Telefónico)</option>
-                <option value="16000">16000 Hz (Voz HD)</option>
-                <option value="22050">22050 Hz (Baja calidad)</option>
-                <option value="32000">32000 Hz (Radio Digital)</option>
-                <option value="44100" selected>44100 Hz (CD Audio)</option>
-                <option value="48000">48000 Hz (DVD/Video)</option>
-                <option value="88200">88200 Hz (Estudio)</option>
-                <option value="96000">96000 Hz (Alta Fidelidad)</option>
-            </select>
-
-            <h3>Procesamiento LTI</h3>
-            <label>Tipo de Filtro:</label>
-            <select id="f-type" onchange="toggleFilter(this.value)">
-                <option value="none">Bypass</option>
-                <option value="lowpass">Pasa-Bajos</option>
-                <option value="highpass">Pasa-Altos</option>
-                <option value="bandpass">Pasa-Banda</option>
-                <option value="bandstop">Rechaza-Banda</option>
-            </select>
-
-            <div id="filter-freqs" class="hidden">
-                <label>Frecuencia Corte 1: <span id="v1" class="val-num">1000</span> Hz</label>
-                <input type="range" id="f1" min="20" max="15000" value="1000" oninput="document.getElementById('v1').innerText = this.value">
-                <div id="f2-box" class="hidden">
-                    <label>Frecuencia Corte 2: <span id="v2" class="val-num">3000</span> Hz</label>
-                    <input type="range" id="f2" min="20" max="15000" value="3000" oninput="document.getElementById('v2').innerText = this.value">
+            <div class="panel">
+                <h3>Observaciones Técnicas</h3>
+                <div id="obs-content">
+                    <p style="font-size: 0.8rem;">Vínculos con las unidades del programa aparecerán aquí.</p>
                 </div>
             </div>
-
-            <button id="run" py-click="run_analysis">ANALIZAR Y CALCULAR</button>
-            <div id="output-text" class="math-results">Esperando proceso...</div>
         </div>
 
-        <div id="plot-area">
-            <p style="text-align:center; margin-top:20%;">Presione ANALIZAR para generar los gráficos</p>
-        </div>
-
-        <div class="panel">
-            <h3>Observaciones Técnicas</h3>
-            <div id="obs-content">
-                <p style="font-size: 0.8rem;">Vínculos con las unidades del programa aparecerán aquí.</p>
+        <div class="status-bar">
+            <div>
+                <span id="status-icon" class="loader"></span>
+                <span id="status-text">Iniciando entorno Python...</span>
             </div>
+            <div>TP: Señales - UNTREF</div>
         </div>
     </div>
 
-    <div class="status-bar">
-        <div>
-            <span id="status-icon" class="loader"></span>
-            <span id="status-text">Iniciando entorno Python...</span>
-        </div>
-        <div>TP: Señales - UNTREF</div>
-    </div>
-</div>
+    <script>
+        function toggleInputs(val) {
+            document.getElementById('gen-controls').classList.toggle('hidden', val === 'file');
+            document.getElementById('file-controls').classList.toggle('hidden', val === 'gen');
+        }
+        function toggleFilter(val) {
+            document.getElementById('filter-freqs').classList.toggle('hidden', val === 'none');
+            document.getElementById('f2-box').classList.toggle('hidden', !['bandpass', 'bandstop'].includes(val));
+        }
+        window.updateStatus = function (text, loading) {
+            document.getElementById('status-text').innerText = text;
+            document.getElementById('status-icon').style.display = loading ? 'inline-block' : 'none';
+        }
+    </script>
 
-<script>
-    function toggleInputs(val) {
-        document.getElementById('gen-controls').classList.toggle('hidden', val==='file');
-        document.getElementById('file-controls').classList.toggle('hidden', val==='gen');
-    }
-    function toggleFilter(val) {
-        document.getElementById('filter-freqs').classList.toggle('hidden', val==='none');
-        document.getElementById('f2-box').classList.toggle('hidden', !['bandpass','bandstop'].includes(val));
-    }
-    window.updateStatus = function(text, loading) {
-        document.getElementById('status-text').innerText = text;
-        document.getElementById('status-icon').style.display = loading ? 'inline-block' : 'none';
-    }
-</script>
-
-<script type="py">
+    <script type="py">
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
@@ -310,6 +415,11 @@ async def run_analysis(event):
             <span class="formula">P = {rms**2:.4f} W</span>
         </div>
         <div class="obs-item">
+    <strong>U2: MECANISMO DE CONVOLUCIÓN</strong>
+    <span class="desc-text">La señal procesada es el resultado de la convolución entre la entrada y la respuesta h[n].</span>
+    <span class="formula">y[n] = x[n] * h[n]</span>
+</div>
+        <div class="obs-item">
             <strong>U4: ANÁLISIS ESPECTRAL</strong>
             <span class="desc-text">Representa la frecuencia fundamental (f0) que define el tono principal de la señal analizada.</span>
             <span class="formula">f₀ = {f_sig} Hz</span>
@@ -345,4 +455,5 @@ async def run_analysis(event):
 
 </script>
 </body>
+
 </html>
