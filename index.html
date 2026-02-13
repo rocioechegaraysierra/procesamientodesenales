@@ -30,6 +30,7 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg-gradient);
             color: var(--text-main);
+            overflow-x: hidden;
         }
 
         .main-wrapper {
@@ -73,15 +74,25 @@
             flex-direction: column;
             overflow-y: auto;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            
         }
 
-        #plot-area {
+   #plot-area {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 20px;
             border: 1px solid var(--glass-border);
+            padding: 10px;
+            overflow-x: hidden; /* Bloquea scroll horizontal interno */
             overflow-y: auto;
-            padding: 15px;
-            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centra el gráfico */
+        }
+
+        /* Fuerza a Matplotlib a no desbordar */
+        #plot-area img, #plot-area div {
+            max-width: 100% !important;
+            height: auto !important;
         }
 
         .status-bar {
@@ -149,17 +160,15 @@
             opacity: 0.9;
         }
 
-        select,
-        input {
+       select, input {
             width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--glass-border);
-            margin-bottom: 10px;
-            font-size: 0.85rem;
+            box-sizing: border-box;
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            outline: none;
+            border: 1px solid var(--glass-border);
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 10px;
         }
 
         option {
